@@ -1,5 +1,9 @@
 ---
 # tasks file for wdijkerman.zabbix
+- name: Gather facts
+  action: ec2_facts
+  when: aws_instance
+
 
 - name: "Install the correct repository"
   include: "RedHat.yml"
@@ -28,37 +32,37 @@
     - config
     - service
 
-- name: "Fail invalid specified agent_listeninterface"
+- name: "Fail invalid specified zabbix_agent_listeninterface"
   fail:
     msg: "The specified network interface does not exist"
-  when: "agent_listeninterface and (agent_listeninterface not in ansible_interfaces)"
+  when: "zabbix_agent_listeninterface and (zabbix_agent_listeninterface not in ansible_interfaces)"
   tags:
     - zabbix-agent
     - config
 
-- name: "Get IP of agent_listeninterface when no agent_listenip specified"
+- name: "Get IP of zabbix_agent_listeninterface when no zabbix_agent_listenip specified"
   set_fact:
-    agent_listenip: "{{ hostvars[inventory_hostname]['ansible_' + agent_listeninterface]['ipv4'].address | default('0.0.0.0') }}"
-    agent_ip: "{{ hostvars[inventory_hostname]['ansible_' + agent_listeninterface]['ipv4'].address | default('0.0.0.0') }}"
-  when: "agent_listeninterface and not agent_listenip"
+    zabbix_agent_listenip: "{{ hostvars[inventory_hostname]['ansible_' + zabbix_agent_listeninterface]['ipv4'].address | default('0.0.0.0') }}"
+    zabbix_agent_ip: "{{ hostvars[inventory_hostname]['ansible_' + zabbix_agent_listeninterface]['ipv4'].address | default('0.0.0.0') }}"
+  when: "zabbix_agent_listeninterface and not zabbix_agent_listenip"
   tags:
     - zabbix-agent
     - config
     - api
 
-- name: "Default agent_listenip to all when not specified"
+- name: "Default zabbix_agent_listenip to all when not specified"
   set_fact:
-    agent_listenip: '0.0.0.0'
-    agent_ip: "{{ hostvars[inventory_hostname]['ansible_default_ipv4'].address }}"
-  when: "not agent_listenip"
+    zabbix_agent_listenip: '0.0.0.0'
+    zabbix_agent_ip: "{{ hostvars[inventory_hostname]['ansible_default_ipv4'].address }}"
+  when: "not zabbix_agent_listenip"
   tags:
     - zabbix-agent
     - config
 
-- name: "Fail invalid specified agent_listenip"
+- name: "Fail invalid specified zabbix_agent_listenip"
   fail:
-    msg: "The agent_listenip does not exist"
-  when: "agent_listenip != '0.0.0.0' and agent_listenip not in ansible_all_ipv4_addresses"
+    msg: "The zabbix_agent_listenip does not exist"
+  when: "zabbix_agent_listenip != '0.0.0.0' and zabbix_agent_listenip not in ansible_all_ipv4_addresses"
   tags:
     - zabbix-agent
     - config
@@ -77,7 +81,7 @@
     - init
 
 - name: "Create include dir zabbix-agent"
-  file: path={{ agent_include }}
+  file: path={{ zabbix_agent_include }}
         owner=zabbix
         group=zabbix
         state=directory
@@ -85,6 +89,38 @@
   tags:
     - config
     - include
+
+- name: Ensure we have no mysql userparameter file
+  file: path="{{ zabbix_agent_include }}/userparameter_mysql.conf" state=absent
+  sudo: yes
+  tags:
+    - config
+    - zabbix-agent
+
+- name: copy additional configs
+  copy: src="userparameters/{{ item }}" dest="{{ zabbix_agent_include }}/{{ item }}"
+  with_items: zabbix_agent_include_files
+  notify: restart zabbix-agent
+  sudo: yes
+  tags:
+    - config
+    - zabbix-agent
+
+- name: create dir for scripts
+  file: path="{{ zabbix_agent_scripts_include}}" state=directory mode=0755
+  when: zabbix_agent_include_scripts
+  sudo: yes
+  tags:
+    - config
+    - zabbix-agent
+
+- name: copy scripts
+  copy: src="scripts/{{ item }}" dest="{{ zabbix_agent_scripts_include }}/{{ item }}" mode=0755
+  with_items: zabbix_agent_include_scripts
+  sudo: yes
+  notify: restart zabbix-agent
+  tags: [config, zabbix-agent]
+
 
 - name: "Make sure the zabbix-agent service is running"
   service: name=zabbix-agent
@@ -94,51 +130,53 @@
     - init
     - service
 
-- name: "Create hostgroups"
+- name: "Create hostgroups through api"
   local_action:
     module: zabbix_group
-    server_url: "{{ zabbix_url }}"
+    server_url: "{{ zabbix_api_url }}"
     login_user: "{{ zabbix_api_user }}"
     login_password: "{{ zabbix_api_pass }}"
-    host_group: zabbix_host_groups
-    state: "{{ zabbix_create_hostgroup }}"
+    host_group: zabbix_api_host_groups
+    state: "{{ zabbix_api_create_hostgroup }}"
   when: zabbix_api_use
+  sudo: no
   tags:
     - api
 
-- name: "Create a new host or update an existing host's info"
+- name: "Create a new host or update an existing host's info through api"
   local_action:
     module: zabbix_host
-    server_url: "{{ zabbix_url }}"
+    server_url: "{{ zabbix_api_url }}"
     login_user: "{{ zabbix_api_user }}"
     login_password: "{{ zabbix_api_pass }}"
-    host_name: "{{ ansible_fqdn }}"
-    host_groups: "{{ zabbix_host_groups }}"
-    link_templates: "{{ zabbix_link_templates }}"
-    status: "{{ zabbix_host_status }}"
-    state: "{{ zabbix_create_host }}"
+    host_name: "{{ zabbix_agent_hostname }}"
+    host_groups: "{{ zabbix_api_host_groups }}"
+    link_templates: "{{ zabbix_api_link_templates }}"
+    status: "{{ zabbix_api_host_status }}"
+    state: "{{ zabbix_api_create_host }}"
     interfaces:
       - type: 1
         main: 1
-        useip: "{{ zabbix_useuip }}"
-        ip: "{{ agent_ip }}"
-        dns: "{{ ansible_fqdn }}"
-        port: "{{ agent_listenport }}"
+        useip: "{{ zabbix_api_useuip }}"
+        ip: "{{ ansible_ec2_public_ipv4 | default(zabbix_agent_ip) }}"
+        dns: "{{ ansible_ec2_public_hostname | default(ansible_fqdn) }}"
+        port: "{{ zabbix_agent_listenport }}"
   when: zabbix_api_use
+  sudo: no
   tags:
     - api
 
 - name: "Updating host configuration with macros"
   local_action:
     module: zabbix_hostmacro
-    server_url: "{{ zabbix_url }}"
+    server_url: "{{ zabbix_appi_url }}"
     login_user: "{{ zabbix_api_user }}"
     login_password: "{{ zabbix_api_pass }}"
-    host_name: "{{ ansible_fqdn }}"
+    host_name: "{{ zabbix_agent_hostname }}"
     macro_name: "{{ item.macro_key }}"
     macro_value: "{{ item.macro_value }}"
   with_items: zabbix_macros
   when: zabbix_api_use and zabbix_macros is defined and item.macro_key is defined
+  sudo: no
   tags:
     - api
-
