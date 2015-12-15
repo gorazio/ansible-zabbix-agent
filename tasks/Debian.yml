@@ -51,6 +51,17 @@
     - zabbix-agent
     - init
 
+- name: "Debian | Installing dependencies"
+  apt: pkg={{ item }}
+       state=present
+       update_cache=yes
+  with_items:
+    - sysstat
+  sudo: yes
+  tags:
+    - zabbix-agent
+    - init
+
 - name: "Debian | Enable the service"
   service: name={{ zabbix_agent_service }}
            enabled=yes

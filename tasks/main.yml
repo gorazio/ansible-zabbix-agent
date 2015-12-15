@@ -121,6 +121,10 @@
   notify: restart zabbix-agent
   tags: [config, zabbix-agent]
 
+- name: "Install fpmmm"
+  include: "fpmmm.yml"
+  when: zabbix_fpmmm_install == true
+
 
 - name: "Make sure the zabbix-agent service is running"
   service: name=zabbix-agent

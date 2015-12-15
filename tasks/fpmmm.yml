@@ -1,0 +1,42 @@
+- name: fpmmm | install prerequisites
+  apt: pkg={{ item }}
+       state=present
+  with_items:
+    - php5-cli
+    - php5-mysqlnd
+    - php5-curl
+    - zabbix-sender
+  sudo: yes
+
+- name: fpmmm | download fpmmm archive
+  get_url: url=https://support.fromdual.com/admin/download/fpmmm-{{ zabbix_fpmmm_version }}.tar.gz
+           dest=/tmp/fpmmm-{{ zabbix_fpmmm_version }}.tar.gz
+
+- name: fpmmm | unpack fpmmm agent
+  unarchive: src=/tmp/fpmmm-{{ zabbix_fpmmm_version }}.tar.gz dest=/opt copy=no
+  sudo: yes
+
+- name: fpmmm | check fpmmm exist
+  stat: path=/opt/fpmmm
+  register: fpmmm_exist
+
+- name: fpmmm | rename fpmmm directory
+  command: mv /opt/fpmmm-{{ zabbix_fpmmm_version }} /opt/fpmmm
+  when: not fpmmm_exist.stat.exists
+  sudo: yes
+
+
+- name: fpmmm | set php cli config
+  copy: src=fpmmm.ini dest=/etc/php5/cli/conf.d/fpmmm.ini
+  sudo: yes
+
+- name: fpmmm | make fpmmm config dir
+  file: path=/etc/fpmmm
+        state=directory
+        owner=zabbix
+  sudo: yes
+
+- name: fpmmm | configure fpmmm
+  template: src=fpmmm.conf.j2
+            dest=/etc/fpmmm/fpmmm.conf
+  sudo: yes

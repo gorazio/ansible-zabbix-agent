@@ -2,6 +2,7 @@
 # defaults file for zabbix-agent
 
 zabbix_version: 2.4
+zabbix_fpmmm_version: 0.10.5
 zabbix_repo: zabbix
 zabbix_agent_package: zabbix-agent
 zabbix_agent_service: zabbix-agent
@@ -53,3 +54,10 @@ zabbix_agent_loadmodulepath: ${libdir}/modules
 zabbix_agent_loadmodule:
 zabbix_agent_include_files: []
 zabbix_agent_include_scripts: []
+
+zabbix_fpmmm_install: false
+zabbix_fpmmm_user: mpm
+zabbix_fpmmm_password: mpm
+zabbix_fpmmm_mysqlhost: localhost
+zabbix_fpmmm_mysqlport: 3306
+zabbix_fpmmm_modules: "innodb master myisam mysql process security"
