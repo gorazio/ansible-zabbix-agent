@@ -103,7 +103,7 @@
     server_url: "{{ zabbix_url }}"
     login_user: "{{ zabbix_api_user }}"
     login_password: "{{ zabbix_api_pass }}"
-    host_group: "{{ zabbix_host_groups }}"
+    host_groups: "{{ zabbix_host_groups }}"
     state: "{{ zabbix_create_hostgroup }}"
   when: zabbix_api_use
   tags:
@@ -115,7 +115,7 @@
     server_url: "{{ zabbix_url }}"
     login_user: "{{ zabbix_api_user }}"
     login_password: "{{ zabbix_api_pass }}"
-    host_name: "{{ ansible_fqdn }}"
+    host_name: "{{ agent_hostname| default(ansible_fqdn) }}"
     host_groups: "{{ zabbix_host_groups }}"
     link_templates: "{{ zabbix_link_templates }}"
     status: "{{ zabbix_host_status }}"
