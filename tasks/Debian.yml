@@ -68,3 +68,12 @@
     - zabbix-agent
     - init
     - service
+
+
+- name: "Debian | Installing dependencies"
+  apt: pkg={{ item }}
+       state=present
+       update_cache=yes
+  with_items:
+    - sysstat
+

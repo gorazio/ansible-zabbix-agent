@@ -62,3 +62,11 @@ agent_tlscertfile:
 agent_tlskeyfile:
 agent_tlspskidentity:
 agent_tlspskfile:
+
+zabbix_fpmmm_version: 0.10.5
+zabbix_fpmmm_install: false
+zabbix_fpmmm_user: mpm
+zabbix_fpmmm_password: mpm
+zabbix_fpmmm_mysqlhost: localhost
+zabbix_fpmmm_mysqlport: 3306
+zabbix_fpmmm_modules: "innodb master myisam mysql process security"

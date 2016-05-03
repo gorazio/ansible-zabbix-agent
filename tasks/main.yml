@@ -106,6 +106,7 @@
     host_groups: "{{ zabbix_host_groups }}"
     state: "{{ zabbix_create_hostgroup }}"
   when: zabbix_api_use
+  become: no
   tags:
     - api
 
@@ -128,6 +129,7 @@
         dns: "{{ ansible_fqdn }}"
         port: "{{ agent_listenport }}"
   when: zabbix_api_use
+  become: no
   tags:
     - api
 
@@ -142,5 +144,42 @@
     macro_value: "{{ item.macro_value }}"
   with_items: zabbix_macros
   when: zabbix_api_use and zabbix_macros is defined and item.macro_key is defined
+  become: no
   tags:
     - api
+
+- name: Ensure we have no mysql userparameter file
+  file: path="{{ zabbix_agent_include }}/userparameter_mysql.conf" state=absent
+  sudo: yes
+  tags:
+    - config
+    - zabbix-agent
+
+- name: copy additional configs
+  copy: src="userparameters/{{ item }}" dest="{{ zabbix_agent_include }}/{{ item }}"
+  with_items: zabbix_agent_include_files
+  notify: restart zabbix-agent
+  sudo: yes
+  tags:
+    - config
+    - zabbix-agent
+
+- name: create dir for scripts
+  file: path="{{ zabbix_agent_scripts_include}}" state=directory mode=0755
+  when: zabbix_agent_include_scripts
+  sudo: yes
+  tags:
+    - config
+    - zabbix-agent
+
+- name: copy scripts
+  copy: src="scripts/{{ item }}" dest="{{ zabbix_agent_scripts_include }}/{{ item }}" mode=0755
+  with_items: zabbix_agent_include_scripts
+  sudo: yes
+  notify: restart zabbix-agent
+  tags: [config, zabbix-agent]
+
+- name: "Install fpmmm"
+  include: "fpmmm.yml"
+  when: zabbix_fpmmm_install == true
+
