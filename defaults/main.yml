@@ -8,6 +8,8 @@ zabbix_agent_package_state: present # or latest
 agent_server:
 agent_serveractive:
 
+
+
 # Zabbix API stuff
 zabbix_api_use: False
 zabbix_url: "http://zabbix.dj-wasabi.local"
@@ -21,7 +23,8 @@ zabbix_host_groups:
   - Linux Servers
 zabbix_link_templates:
   - Template OS Linux
-
+zabbix_agent_include_scripts:
+  
 # Zabbix configuration variables
 agent_pidfile: /var/run/zabbix/zabbix_agentd.pid
 agent_logfile: /var/log/zabbix/zabbix_agentd.log

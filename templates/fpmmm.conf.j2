@@ -4,12 +4,12 @@ LogLevel      = 2
 LogFile       = /var/log/zabbix/fpmmm.log
 CacheFileBase = /tmp/fpmmm/fpmmmCache
 AgentLockFile = /tmp/fpmmm/fpmmm.lock
-ZabbixServer  = {{ zabbix_agent_server }}
+ZabbixServer  = {{ agent_server }}
 Disabled      = false
 Modules       = innodb master myisam mysql process security
 
 # Here you could enter the hostname of your machine (uname -n)
-[{{zabbix_agent_hostname}}]          # This MUST match Hostname in Zabbix!
+[{{ agent_hostname }}]          # This MUST match Hostname in Zabbix!
 Type          = mysqld
 Username      = {{ zabbix_fpmmm_user }}
 Password      = {{ zabbix_fpmmm_password }}

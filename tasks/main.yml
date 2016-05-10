@@ -155,27 +155,27 @@
     - config
     - zabbix-agent
 
-- name: copy additional configs
+- name: Copy additional configs
   copy: src="userparameters/{{ item }}" dest="{{ agent_include }}/{{ item }}"
-  with_items: zabbix_agent_include_files
+  with_items: "{{zabbix_agent_include_files}}"
   notify: restart zabbix-agent
-  sudo: yes
+  become: yes
   tags:
     - config
     - zabbix-agent
 
-- name: create dir for scripts
+- name: Create dir for scripts
   file: path="{{ agent_scripts }}" state=directory mode=0755
-  when: zabbix_agent_include_scripts
-  sudo: yes
+  when: "{{zabbix_agent_include_scripts}}"
+  become: yes
   tags:
     - config
     - zabbix-agent
 
-- name: copy scripts
+- name: Copy scripts
   copy: src="scripts/{{ item }}" dest="{{ agent_scripts }}/{{ item }}" mode=0755
-  with_items: zabbix_agent_include_scripts
-  sudo: yes
+  with_items: "{{zabbix_agent_include_scripts}}"
+  become: yes
   notify: restart zabbix-agent
   tags: [config, zabbix-agent]
 
