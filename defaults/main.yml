@@ -23,8 +23,9 @@ zabbix_host_groups:
   - Linux Servers
 zabbix_link_templates:
   - Template OS Linux
-zabbix_agent_include_scripts:
-  
+zabbix_agent_include_scripts: []
+zabbix_agent_include_files: []
+
 # Zabbix configuration variables
 agent_pidfile: /var/run/zabbix/zabbix_agentd.pid
 agent_logfile: /var/log/zabbix/zabbix_agentd.log
