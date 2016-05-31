@@ -2,7 +2,6 @@
 # handlers file for zabbix-agent
 
 - name: restart zabbix-agent
-  service: name={{ zabbix_agent_service }}
+  service: name="{{ zabbix_agent_service }}"
            state=restarted
-  sudo: yes
-
+  become: yes
